@@ -1,39 +1,42 @@
-import express, { Express } from 'express';
-import dotenv from 'dotenv';
-import cors from 'cors';
-import helmet from 'helmet';
-import mongoose from 'mongoose';
+import express from 'express';
+import { env } from './config/env.js';
+import { configureApp } from './config/app.js';
+import { errorHandler } from './utils/errorHandler.js';
 
-// Load environment variables
-dotenv.config();
+const app = express();
 
-const app: Express = express();
-const port = process.env.PORT || 3000;
+// Apply configurations
+configureApp(app);
 
-// Middleware
-app.use(cors());
-app.use(helmet());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Database connection
-mongoose
-  .connect(process.env.MONGODB_URI as string)
-  .then(() => {
-    console.log('Connected to MongoDB');
-  })
-  .catch((error) => {
-    console.error('MongoDB connection error:', error);
+// Test route
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    environment: env.NODE_ENV
   });
-
-// Basic route
-app.get('/', (req, res) => {
-  res.send('Immigration App API is running');
 });
+
+// Test error route
+app.get('/test-error', () => {
+  throw new Error('Test error handling');
+});
+
+// Apply error handler
+app.use(errorHandler);
 
 // Start server
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
+const server = app.listen(env.PORT, () => {
+  console.log(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
 });
 
-export default app;
+// Handle server shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received. Closing server...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
+export { app, server };
