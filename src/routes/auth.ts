@@ -7,7 +7,9 @@ import {
   loginSchema, 
   passwordChangeSchema,
   refreshTokenSchema,
-  emailChangeSchema
+  emailChangeSchema,
+  passwordForgotSchema,
+  passwordResetSchema
 } from '../schemas/authSchemas.js';
 
 const router = Router();
@@ -25,5 +27,8 @@ router.post('/password/change', authenticate, validateRequest(passwordChangeSche
 router.post('/email/change', authenticate, validateRequest(emailChangeSchema), authController.initiateEmailChange);
 router.post('/logout', authenticate, authController.logout);
 router.post('/logout-all', authenticate, authController.logoutAll);
+
+router.post('/password/forgot', validateRequest(passwordForgotSchema), authController.requestPasswordReset);
+router.post('/password/reset', validateRequest(passwordResetSchema), authController.resetPassword);
 
 export default router;

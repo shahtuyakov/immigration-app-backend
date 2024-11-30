@@ -72,3 +72,20 @@ export const emailChangeSchema = z.object({
       .min(1, 'Current password is required'),
   }),
 });
+
+export const passwordForgotSchema = z.object({
+  body: z.object({
+    email: z.string().email('Invalid email format')
+  })
+});
+
+export const passwordResetSchema = z.object({
+  body: z.object({
+    token: z.string().min(1, 'Reset token is required'),
+    newPassword: passwordValidation,
+    confirmPassword: z.string().min(1, 'Password confirmation is required')
+  }).refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"]
+  })
+});

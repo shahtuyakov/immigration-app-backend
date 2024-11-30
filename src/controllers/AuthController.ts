@@ -163,4 +163,29 @@ export class AuthController {
       next(error);
     }
   };
+
+  requestPasswordReset = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await this.authService.requestPasswordReset(req.body.email);
+      res.json(createSuccessResponse(
+        null,
+        'If your email is registered, you will receive password reset instructions'
+      ));
+    } catch (error) {
+      next(error);
+    }
+  };
+  
+  resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { token, newPassword } = req.body;
+      await this.authService.resetPassword(token, newPassword);
+      res.json(createSuccessResponse(
+        null,
+        'Password has been reset successfully'
+      ));
+    } catch (error) {
+      next(error);
+    }
+  };
 }

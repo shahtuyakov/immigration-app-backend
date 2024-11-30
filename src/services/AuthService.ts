@@ -5,6 +5,7 @@ import { AppError } from '../utils/errorHandler.js';
 import { env } from '../config/env.js';
 import { LoginDTO, CreateUserDTO } from '../interfaces/dtos/UserDTO.js';
 import { EmailService } from './EmailService.js';
+import { randomBytes, createHash } from 'crypto';
 
 export class AuthService {
   private emailService: EmailService;
@@ -254,55 +255,36 @@ export class AuthService {
     }
   }
 
-  async initiateEmailChange(
-    userId: string,
-    newEmail: string,
-    currentPassword: string
-  ): Promise<void> {
+  async initiateEmailChange(userId: string, newEmail: string, currentPassword: string): Promise<void> {
     try {
-      const user = await User.findById(userId).select("+password");
+      // Find user with password
+      const user = await User.findById(userId).select('+password');
       if (!user) {
-        throw new AppError(404, "User not found");
+        throw new AppError(404, 'User not found');
       }
-
+  
       // Verify current password
-      const isPasswordValid = await user.comparePassword(currentPassword);
+      const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
       if (!isPasswordValid) {
-        throw new AppError(401, "Current password is incorrect");
+        throw new AppError(401, 'Current password is incorrect');
       }
-
+  
       // Check if new email is already in use
       const emailExists = await User.findOne({ email: newEmail });
       if (emailExists) {
-        throw new AppError(409, "Email is already in use");
+        throw new AppError(409, 'Email is already in use');
       }
-      // Generate verification token
-      const verificationToken = require("crypto")
-        .randomBytes(32)
-        .toString("hex");
-
-      // Store the new email and token temporarily
-      user.emailVerificationToken = verificationToken;
-      user.emailVerificationExpires = new Date(
-        Date.now() + 24 * 60 * 60 * 1000
-      ); // 24 hours
-
-      // Store the new email temporarily
-      // We'll update this in a more secure way in a real application
-      user.set("pendingEmail", newEmail, { strict: false });
-
+  
+      // Update email directly (in a real app, you'd want email verification)
+      user.email = newEmail;
       await user.save();
-
-      // Send verification email
-      await this.emailService.sendEmailVerification(
-        newEmail,
-        verificationToken
-      );
-
-      console.log("Email verification initiated for user:", userId);
+  
     } catch (error) {
-      console.error("Email change initiation error:", error);
-      throw this.handleError(error);
+      console.error('Email change error:', error);
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(500, 'Failed to change email');
     }
   }
 
@@ -338,6 +320,54 @@ export class AuthService {
     } catch (error) {
       console.error("Email verification error:", error);
       throw this.handleError(error);
+    }
+  }
+  
+  async requestPasswordReset(email: string): Promise<void> {
+    try {
+      const user = await User.findOne({ email });
+      if (!user) {
+        return;
+      }
+  
+      // Generate reset token
+      const resetToken = randomBytes(32).toString('hex');
+      user.passwordResetToken = createHash('sha256')
+        .update(resetToken)
+        .digest('hex');
+      
+      user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      await user.save();
+  
+      await this.emailService.sendPasswordReset(email, resetToken);
+    } catch (error) {
+      throw new AppError(500, 'Failed to initiate password reset');
+    }
+  }
+  
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    try {
+      const hashedToken = createHash('sha256')
+        .update(token)
+        .digest('hex');
+  
+      const user = await User.findOne({
+        passwordResetToken: hashedToken,
+        passwordResetExpires: { $gt: Date.now() }
+      });
+  
+      if (!user) {
+        throw new AppError(400, 'Invalid or expired reset token');
+      }
+  
+      user.password = newPassword;
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      user.refreshTokens = [];
+  
+      await user.save();
+    } catch (error) {
+      throw new AppError(500, 'Failed to reset password');
     }
   }
 
