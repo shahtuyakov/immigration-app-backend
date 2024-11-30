@@ -6,15 +6,10 @@
   "main": "dist/index.js",
   "scripts": {
     "start": "node --watch dist/index.js",
-    "dev": "nodemon --watch src -e ts,json --exec 'ts-node' src/index.ts",
+    "dev": "nodemon --exec tsx src/index.ts",
     "build": "tsc",
-    "lint": "eslint . --ext .ts",
     "test": "node --import tsx --test tests/**/*.test.ts",
-    "test:unit": "node --import tsx --test tests/unit/**/*.test.ts",
-    "test:integration": "node --import tsx --test tests/integration/**/*.test.ts",
-    "test:e2e": "node --import tsx --test tests/e2e/**/*.test.ts",
-    "test:watch": "node --import tsx --test --watch tests/**/*.test.ts",
-    "test:coverage": "node --import tsx --test --coverage tests/**/*.test.ts"
+    "test:watch": "node --import tsx --test --watch tests/**/*.test.ts"
   },
   "engines": {
     "node": ">=22.11.0",
@@ -44,7 +39,7 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/mongoose": "^5.11.97",
     "@types/node": "^20.17.9",
-    "nodemon": "^3.0.2",
+    "nodemon": "^3.1.7",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.2",
     "typescript": "^5.3.3"
