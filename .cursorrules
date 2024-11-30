@@ -1,0 +1,274 @@
+# CONTEXT
+    I want to build IOS app with news aggregation where users also can track the immigration cases and schedule the appointments with layers to get consultations. First I want to build for IOS. The target audience are immigrants who want to get make they process smooth and success. 
+    Main functionality: 
+    - Get Immigration news everyday.
+    - Track the immigration cases.
+    - Schedule the appointments with layers.
+    Backend should handle these features:
+    - user authentication for additional access of the feature.
+    - News, Cases and Layers data storage.
+    - Have dashboard where we can onboard Layers to upload they info.
+    I do not expect to manage real time chat feature! BUT i want to update news feed every time when we have new news. 
+    I'm not sure about specific storage. I leave this for you to analyze trade off of each option.
+    I want to  handle sensitive data requiring encyption or compliance for user info, cases numbers
+    I don't have a frontend yet I'm working on it. 
+    For the news feed I expect to integrate with external services third-party APIs.
+    For preferred hosting or cloud provider I'll go with Azure.
+    I would like to integrate with NewRelic for monitoring, logging, and maintaining the system.
+    I'm good to use Node.js for programming languages.
+
+# OBJECTIVE
+  You are an expert in TypeScript, Node.js v22.11.0 , Express.js, NestJS, 
+  MongoDB, Azure, NewRelic, JWT, Bcrypt, Mongoose, and Mongoose-encryption.
+
+  Code Style and Structure
+  - Write concise, technical TypeScript code with accurate examples.
+  - Use functional and declarative programming patterns; avoid classes.
+  - Prefer iteration and modularization over code duplication.
+  - Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
+  - Structure files: exported component, subcomponents, helpers, static content, types.
+
+  TypeScript Usage
+  - Use TypeScript for all code; prefer interfaces over types.
+  - Avoid enums; use maps instead.
+  - Use functional components with TypeScript interfaces.
+  - Use strict mode in TypeScript for better type safety.
+
+  Syntax and Formatting
+  - Use the "function" keyword for pure functions.
+  - Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
+  - Use declarative JSX.
+  - Use Prettier for consistent code formatting.
+
+  Testing
+  - All new code should be covered with unit tests.
+  - All new functions should be covered with unit tests.
+  - All new components should be covered with unit tests.
+
+  Security
+  - Sanitize user inputs to prevent XSS attacks.
+  - Ensure secure communication with APIs using HTTPS and proper authentication.
+
+# SYSTEM DESIGN
+
+    System Architecture Overview
+    Tech Stack:
+
+    Programming Language: Node.js with TypeScript
+    Backend Framework: Express.js or NestJS
+    Cloud Provider: Azure
+    Database: MongoDB (for flexible schema) with Azure Cosmos DB
+    Authentication: JWT with Azure Active Directory B2C
+    Monitoring: New Relic
+    News API Integration: Multiple news sources APIs
+
+    Key Components
+
+    Authentication and User Management
+
+    Implement secure user registration and login
+    Use Azure Active Directory B2C for robust authentication
+    Implement role-based access control (RBAC)
+    Encrypt sensitive user information at rest and in transit
+    Implement multi-factor authentication
+
+    Data Storage Architecture
+
+    User Collection: Store user profiles, encrypted personal information
+    Immigration Cases Collection: Store case details with access controls
+    Lawyers Collection: Store lawyer profiles and availability
+    News Collection: Cache and store aggregated news items
+
+    News Aggregation System
+
+    Implement background workers to fetch news from multiple APIs
+    Use cron jobs to periodically update news feed
+    Implement caching mechanism to reduce API call costs
+    Potential news sources:
+
+    Immigration-focused news APIs
+    Government immigration websites
+    Specialized immigration news platforms
+
+    Lawyer Appointment Scheduling
+
+    Create a booking system with lawyer availability slots
+    Implement reservation and cancellation mechanisms
+    Send confirmation emails/notifications
+
+    Security Considerations
+
+    Use Azure Key Vault for secret management
+    Implement data encryption for sensitive fields
+    Follow GDPR and CCPA compliance guidelines
+    Use HTTPS for all communications
+    Implement rate limiting and input validation
+
+    API Endpoints Design
+    typescriptCopy// User Authentication Endpoints
+    POST /auth/register
+    POST /auth/login
+    POST /auth/reset-password
+
+    // News Endpoints
+    GET /news/latest
+    GET /news/categories
+    GET /news/search
+
+    // Immigration Case Endpoints
+    POST /cases/create
+    GET /cases/:caseId
+    PUT /cases/:caseId
+    DELETE /cases/:caseId
+
+    // Lawyer Endpoints
+    GET /lawyers
+    GET /lawyers/:lawyerId
+    POST /appointments/book
+    GET /appointments/available-slots
+    Monitoring and Logging
+
+    Integrate New Relic for:
+
+    Performance monitoring
+    Error tracking
+    System health checks
+    Resource utilization tracking
+
+
+
+    Scalability Considerations
+
+    Use Azure Kubernetes Service (AKS) for container orchestration
+    Implement horizontal scaling
+    Use message queues for asynchronous processing
+    Implement caching with Redis
+
+    Proposed Database Schema (MongoDB)
+
+    User Schema
+
+    typescriptCopy{
+    _id: ObjectId,
+    email: string,
+    passwordHash: string,
+    firstName: string,
+    lastName: string,
+    encryptedPersonalInfo: EncryptedData,
+    role: 'user' | 'lawyer' | 'admin',
+    createdAt: Date
+    }
+
+    Immigration Case Schema
+
+    typescriptCopy{
+    _id: ObjectId,
+    userId: ObjectId,
+    caseNumber: string,
+    status: string,
+    documentLinks: string[],
+    encryptedDetails: EncryptedData,
+    lastUpdated: Date
+    }
+
+    Lawyer Schema
+
+    typescriptCopy{
+    _id: ObjectId,
+    name: string,
+    specialization: string[],
+    availableSlots: Slot[],
+    contactInfo: {
+        email: string,
+        phone: string
+    }
+    }
+    Potential Challenges and Mitigation
+
+    API Rate Limits
+
+    Implement robust caching
+    Use multiple news API sources
+    Handle API failures gracefully
+
+    Data Privacy
+
+    Use encryption for sensitive data
+    Implement strict access controls
+    Regular security audits
+
+    Recommended Next Steps
+
+    Create detailed API documentation
+    Set up development environment
+    Implement basic authentication flow
+    Create database migration scripts
+    Set up CI/CD pipeline with Azure DevOps
+
+
+# STYLE
+  
+  - Keep answers concise and direct, minimizing unnecessary wording.
+  - Emphasize code readability over performance optimization.
+  - Maintain a professional and supportive tone, ensuring clarity of content.
+
+
+  # RESPONSE FORMAT
+  
+  - **Utilize the Chain-of-Thought (CoT) method to reason and respond, explaining your thought process step by step.**
+  - Conduct reasoning, thinking, and code writing in English.
+  - The reply should include:
+  
+    1. **Step-by-Step Plan**: Describe the implementation process with detailed pseudocode or step-by-step explanations, showcasing your thought process.
+    2. **Code Implementation**: Provide correct, up-to-date, error-free, fully functional, runnable, secure, and efficient code. The code should:
+       - Include all necessary imports and properly name key components.
+       - Fully implement all requested features, leaving no to-dos, placeholders, or omissions.
+    3. **Concise Response**: Minimize unnecessary verbosity, focusing only on essential information.
+  
+  - If a correct answer may not exist, please point it out. If you do not know the answer, please honestly inform me rather than guessing.
+  
+  ---
+  
+  # START ANALYSIS
+  
+  If you understand, please prepare to assist me and await my question.
+
+# PROJECT STRUCTURE
+    immigration-app-backend/
+    ├── src/
+    │   ├── config/         
+    │   │   ├── env.ts         # Environment configuration
+    │   │   ├── app.ts         # Express app configuration
+    │   │   └── database.ts    # MongoDB connection
+    │   ├── models/
+    │   │   ├── User.ts        # User model
+    │   │   ├── ImmigrationCase.ts  # Case model
+    │   │   └── News.ts        # News model
+    │   ├── routes/
+    │   │   └── test.ts        # Test routes
+    │   ├── utils/
+    │   │   └── errorHandler.ts # Error handling
+    │   └── index.ts           # App entry point
+    ├── tests/                 # Test files structure
+    ├── .env                   # Environment variables
+    ├── .gitignore
+    ├── package.json
+    ├── tsconfig.json
+    └── README.md
+
+# KEY DEPENDENCIES
+    {
+        "dependencies": {
+            "express": "^4.18.2",
+            "mongoose": "^8.0.3",
+            "cors": "^2.8.5",
+            "helmet": "^7.1.0",
+            "jsonwebtoken": "^9.0.2",
+            "bcryptjs": "^2.4.3"
+        },
+        "devDependencies": {
+            "typescript": "^5.3.3",
+            "tsx": "latest",
+            "nodemon": "^3.0.2"
+        }
+    }
