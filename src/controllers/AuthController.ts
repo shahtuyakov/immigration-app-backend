@@ -47,7 +47,9 @@ export class AuthController {
 
   updateProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const updatedUser = await this.authService.updateProfile(req.user.id, req.body);
+      // The authenticate middleware ensures req.user exists
+      const updatedUser = await this.authService.updateProfile(req.user!.id, req.body);
+      
       res.json(createSuccessResponse({
         user: toUserResponseDTO(updatedUser)
       }, 'Profile updated successfully', req));
@@ -56,11 +58,85 @@ export class AuthController {
     }
   };
 
+  initiateEmailChange = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { newEmail, currentPassword } = req.body;
+      
+      await this.authService.initiateEmailChange(
+        req.user!.id,
+        newEmail,
+        currentPassword
+      );
+      
+      res.json(createSuccessResponse(
+        null,
+        'Email verification link has been sent to your new email address',
+        req
+      ));
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  verifyEmailChange = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { token } = req.params;
+      
+      await this.authService.verifyEmailChange(req.user!.id, token);
+      
+      res.json(createSuccessResponse(
+        null,
+        'Email address has been successfully updated',
+        req
+      ));
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  changePassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      
+      await this.authService.changePassword(
+        req.user!.id,
+        currentPassword,
+        newPassword
+      );
+      
+      res.json(createSuccessResponse(
+        null,
+        'Password has been successfully updated',
+        req
+      ));
+    } catch (error) {
+      next(error);
+    }
+  };
+
   logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // In a more complex implementation, you might want to invalidate the token
-      // For now, we'll just send a success response
-      res.json(createSuccessResponse(null, 'Logout successful', req));
+      await this.authService.logout(req.user!.id, req.token!);
+      
+      res.json(createSuccessResponse(
+        null,
+        'Successfully logged out',
+        req
+      ));
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  logoutAll = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await this.authService.logoutAll(req.user!.id);
+      
+      res.json(createSuccessResponse(
+        null,
+        'Successfully logged out from all devices',
+        req
+      ));
     } catch (error) {
       next(error);
     }

@@ -5,31 +5,17 @@ import { configureApp } from './config/app.js';
 import { errorHandler } from './utils/errorHandler.js';
 import { connectDatabase } from './config/database.js';
 import authRoutes from './routes/auth.js';
-import debugRoutes from './routes/debug.js';
 
 const app = express();
 
 // Connect to database
-connectDatabase()
-  .then(() => {
-    console.log('Database connection established');
-  })
-  .catch((error) => {
-    console.error('Database connection failed:', error);
-    process.exit(1);
-  });
+await connectDatabase();
 
 // Apply configurations
 configureApp(app);
 
-// Apply routes
+// Mount routes
 app.use('/api/auth', authRoutes);
-
-// Only mount debug routes in development
-if (env.NODE_ENV === 'development') {
-  app.use('/api/debug', debugRoutes);
-  console.log('Debug routes enabled');
-}
 
 // Health check route
 app.get('/health', (req, res) => {

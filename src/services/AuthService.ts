@@ -4,8 +4,15 @@ import { User, IUser } from '../models/User.js';
 import { AppError } from '../utils/errorHandler.js';
 import { env } from '../config/env.js';
 import { LoginDTO, CreateUserDTO } from '../interfaces/dtos/UserDTO.js';
+import { EmailService } from './EmailService.js';
 
 export class AuthService {
+  private emailService: EmailService;
+
+  constructor() {
+    this.emailService = new EmailService();
+  }
+
   private generateTokens(userId: string): { accessToken: string; refreshToken: string } {
     const accessToken = jwt.sign({ id: userId }, env.JWT_SECRET, {
       expiresIn: env.JWT_EXPIRES_IN,
@@ -15,115 +22,109 @@ export class AuthService {
       expiresIn: env.REFRESH_TOKEN_EXPIRES_IN,
     });
 
+    // Store refresh token in user document
+    User.findByIdAndUpdate(userId, {
+      $push: { refreshTokens: accessToken }
+    }).exec();
+
     return { accessToken, refreshToken };
   }
 
   async register(userData: CreateUserDTO): Promise<{ user: IUser; tokens: { accessToken: string; refreshToken: string } }> {
     try {
-      // Check for existing user
       const existingUser = await User.findOne({ email: userData.email });
       if (existingUser) {
         throw new AppError(409, 'Email already registered');
       }
 
-      // Hash password - using a consistent salt rounds value of 12
+      // Hash password
       const salt = await bcrypt.genSalt(12);
       const hashedPassword = await bcrypt.hash(userData.password, salt);
-      
-      console.log('Creating user with hashed password');
-      
-      // Create user with hashed password
+
+      // Create user
       const user = await User.create({
         ...userData,
-        password: hashedPassword
+        password: hashedPassword,
+        refreshTokens: [], // Initialize empty tokens array
       });
 
-      // Generate authentication tokens
+      // Generate tokens and store access token
       const tokens = this.generateTokens(user._id.toString());
 
-      // Remove password from response
       const userResponse = user.toObject();
       delete userResponse.password;
+      delete userResponse.refreshTokens;
 
       return { user: userResponse, tokens };
     } catch (error) {
-      console.error('Registration error:', error);
-      throw error;
+      throw this.handleError(error);
     }
   }
 
   async login(credentials: LoginDTO): Promise<{ user: IUser; tokens: { accessToken: string; refreshToken: string } }> {
     try {
-      console.log('Attempting login for:', credentials.email);
-      
-      // Find user and explicitly include password field
       const user = await User.findOne({ email: credentials.email })
         .select('+password')
         .exec();
 
       if (!user) {
-        console.log('No user found with email:', credentials.email);
         throw new AppError(401, 'Invalid email or password');
       }
 
-      // Compare passwords using bcrypt directly
-      const isPasswordValid = await bcrypt.compare(
-        credentials.password,
-        user.password
-      );
-
-      console.log('Password validation result:', isPasswordValid);
-
+      const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
       if (!isPasswordValid) {
         throw new AppError(401, 'Invalid email or password');
       }
 
-      // Generate new tokens after successful login
+      // Generate new tokens and store access token
       const tokens = this.generateTokens(user._id.toString());
 
-      // Remove password from response
       const userResponse = user.toObject();
       delete userResponse.password;
+      delete userResponse.refreshTokens;
 
       return { user: userResponse, tokens };
     } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+      throw this.handleError(error);
     }
   }
 
   // Token verification
   async verifyToken(token: string): Promise<IUser> {
     try {
-      console.log('Verifying token');
-      
+      console.log("Verifying token");
+
       const decoded = jwt.verify(token, env.JWT_SECRET) as { id: string };
       const user = await User.findById(decoded.id);
 
       if (!user || !user.isActive) {
-        throw new AppError(401, 'Invalid token or user not found');
+        throw new AppError(401, "Invalid token or user not found");
       }
 
       return user;
     } catch (error) {
-      console.error('Token verification error:', error);
+      console.error("Token verification error:", error);
       if (error instanceof jwt.TokenExpiredError) {
-        throw new AppError(401, 'Token has expired');
+        throw new AppError(401, "Token has expired");
       }
-      throw new AppError(401, 'Invalid token');
+      throw new AppError(401, "Invalid token");
     }
   }
 
   // Token refresh
-  async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string }> {
+  async refreshAccessToken(
+    refreshToken: string
+  ): Promise<{ accessToken: string }> {
     try {
-      console.log('Refreshing access token');
-      
-      const decoded = jwt.verify(refreshToken, env.REFRESH_TOKEN_SECRET) as { id: string };
+      console.log("Refreshing access token");
+
+      const decoded = jwt.verify(refreshToken, env.REFRESH_TOKEN_SECRET) as {
+        id: string;
+      };
       const user = await User.findById(decoded.id);
 
       if (!user || !user.isActive) {
-        throw new AppError(401, 'Invalid refresh token or user not found');
+        throw new AppError(401, "Invalid refresh token or user not found");
       }
 
       const accessToken = jwt.sign({ id: user._id }, env.JWT_SECRET, {
@@ -132,53 +133,225 @@ export class AuthService {
 
       return { accessToken };
     } catch (error) {
-      console.error('Refresh token error:', error);
+      console.error("Refresh token error:", error);
       if (error instanceof jwt.TokenExpiredError) {
-        throw new AppError(401, 'Refresh token has expired');
+        throw new AppError(401, "Refresh token has expired");
       }
-      throw new AppError(401, 'Invalid refresh token');
+      throw new AppError(401, "Invalid refresh token");
     }
   }
 
   // Profile update
-  async updateProfile(userId: string, updateData: Partial<IUser>): Promise<IUser> {
+  async updateProfile(
+    userId: string,
+    updateData: Partial<IUser>
+  ): Promise<IUser> {
     try {
-      console.log('Attempting to update profile for user:', userId);
-      
-      // First, verify the user exists
-      const user = await User.findById(userId);
-      if (!user) {
-        throw new AppError(404, 'User not found');
-      }
-
-      // Remove sensitive fields that shouldn't be updated directly
+      // Remove sensitive fields from update data
       const sanitizedData = { ...updateData };
       delete sanitizedData.password;
-      delete sanitizedData.email;  // Typically email changes should be handled separately
-      delete sanitizedData.role;   // Role changes should be handled by admin operations
-      
-      // Update the user document
+      delete sanitizedData.email;
+      delete sanitizedData.role;
+      delete sanitizedData.emailVerified;
+      delete sanitizedData.refreshTokens;
+
       const updatedUser = await User.findByIdAndUpdate(
         userId,
         { $set: sanitizedData },
-        { 
-          new: true,          // Return the updated document
-          runValidators: true // Run model validators
-        }
+        { new: true, runValidators: true }
       );
 
       if (!updatedUser) {
-        throw new AppError(404, 'Failed to update user profile');
+        throw new AppError(404, "User not found");
       }
 
-      console.log('Profile updated successfully for user:', userId);
       return updatedUser;
     } catch (error) {
-      console.error('Profile update error:', error);
+      throw this.handleError(error);
+    }
+  }
+
+  async changePassword(
+    userId: string, 
+    currentPassword: string, 
+    newPassword: string
+  ): Promise<void> {
+    try {
+      console.log('Starting password change process for user:', userId);
+
+      // Find user and explicitly include password field
+      const user = await User.findById(userId).select('+password');
+      
+      if (!user) {
+        console.log('User not found during password change');
+        throw new AppError(404, 'User not found');
+      }
+
+      // Verify current password
+      const isCurrentPasswordValid = await bcrypt.compare(
+        currentPassword,
+        user.password
+      );
+
+      if (!isCurrentPasswordValid) {
+        console.log('Invalid current password provided');
+        throw new AppError(401, 'Current password is incorrect');
+      }
+
+      // Check if new password is different from current
+      const isSamePassword = await bcrypt.compare(newPassword, user.password);
+      if (isSamePassword) {
+        throw new AppError(400, 'New password must be different from current password');
+      }
+
+      // Hash new password
+      const salt = await bcrypt.genSalt(12);
+      const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+      // Update password and invalidate all existing sessions
+      user.password = hashedNewPassword;
+      user.refreshTokens = []; // Invalidate all existing sessions
+      
+      await user.save();
+
+      console.log('Password successfully changed for user:', userId);
+    } catch (error) {
+      console.error('Password change error:', error);
+      
+      // Handle specific error types
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError(500, 'Failed to update profile');
+      
+      // Handle mongoose errors
+      if (error.name === 'MongooseError') {
+        throw new AppError(500, 'Database error during password change');
+      }
+      
+      throw new AppError(500, 'Failed to change password');
     }
+  }
+
+  async logout(userId: string, currentToken: string): Promise<void> {
+    try {
+      // Remove the current refresh token from the user's refresh tokens array
+      await User.findByIdAndUpdate(userId, {
+        $pull: { refreshTokens: currentToken },
+      });
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async logoutAll(userId: string): Promise<void> {
+    try {
+      // Remove all refresh tokens for the user
+      await User.findByIdAndUpdate(userId, {
+        $set: { refreshTokens: [] },
+      });
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async initiateEmailChange(
+    userId: string,
+    newEmail: string,
+    currentPassword: string
+  ): Promise<void> {
+    try {
+      const user = await User.findById(userId).select("+password");
+      if (!user) {
+        throw new AppError(404, "User not found");
+      }
+
+      // Verify current password
+      const isPasswordValid = await user.comparePassword(currentPassword);
+      if (!isPasswordValid) {
+        throw new AppError(401, "Current password is incorrect");
+      }
+
+      // Check if new email is already in use
+      const emailExists = await User.findOne({ email: newEmail });
+      if (emailExists) {
+        throw new AppError(409, "Email is already in use");
+      }
+      // Generate verification token
+      const verificationToken = require("crypto")
+        .randomBytes(32)
+        .toString("hex");
+
+      // Store the new email and token temporarily
+      user.emailVerificationToken = verificationToken;
+      user.emailVerificationExpires = new Date(
+        Date.now() + 24 * 60 * 60 * 1000
+      ); // 24 hours
+
+      // Store the new email temporarily
+      // We'll update this in a more secure way in a real application
+      user.set("pendingEmail", newEmail, { strict: false });
+
+      await user.save();
+
+      // Send verification email
+      await this.emailService.sendEmailVerification(
+        newEmail,
+        verificationToken
+      );
+
+      console.log("Email verification initiated for user:", userId);
+    } catch (error) {
+      console.error("Email change initiation error:", error);
+      throw this.handleError(error);
+    }
+  }
+
+  async verifyEmailChange(userId: string, token: string): Promise<void> {
+    try {
+      const user = await User.findOne({
+        _id: userId,
+        emailVerificationToken: token,
+        emailVerificationExpires: { $gt: Date.now() },
+      });
+
+      if (!user) {
+        throw new AppError(400, "Invalid or expired verification token");
+      }
+
+      // Get the pending email from the temporary storage
+      const newEmail = user.get("pendingEmail");
+      if (!newEmail) {
+        throw new AppError(400, "No pending email change found");
+      }
+
+      // Update the email
+      user.email = newEmail;
+      user.emailVerified = true;
+      user.emailVerificationToken = undefined;
+      user.emailVerificationExpires = undefined;
+      // Remove the temporary storage
+      user.set("pendingEmail", undefined, { strict: false });
+
+      await user.save();
+
+      console.log("Email successfully changed for user:", userId);
+    } catch (error) {
+      console.error("Email verification error:", error);
+      throw this.handleError(error);
+    }
+  }
+
+  private handleError(error: any): never {
+    console.error('Service error:', error);
+    
+    if (error instanceof AppError) {
+      throw error;
+    }
+    
+    if (error.name === 'MongooseError') {
+      throw new AppError(500, 'Database operation failed');
+    }
+    
+    throw new AppError(500, 'An unexpected error occurred');
   }
 }
