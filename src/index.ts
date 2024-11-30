@@ -4,7 +4,7 @@ import { env } from './config/env.js';
 import { configureApp } from './config/app.js';
 import { errorHandler } from './utils/errorHandler.js';
 import { connectDatabase } from './config/database.js';
-import testRoutes from './routes/test.js';
+import authRoutes from './routes/auth.js';
 
 const app = express();
 
@@ -22,7 +22,7 @@ connectDatabase()
 configureApp(app);
 
 // Apply routes
-app.use('/api/test', testRoutes);
+app.use('/api/auth', authRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {

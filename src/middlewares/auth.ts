@@ -1,11 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/errorHandler.js';
+import { AuthService } from '../services/AuthService.js';
 
-// Extend Express Request type to include user
+const authService = new AuthService();
+
+// Enhanced type for authenticated requests
 declare global {
   namespace Express {
     interface Request {
-      user?: any; // We'll type this properly when implementing authentication
+      user?: any;
+      token?: string;
     }
   }
 }
@@ -16,15 +20,19 @@ export const authenticate = async (
   next: NextFunction
 ) => {
   try {
-    // We'll implement the actual authentication logic later
-    // This is just the structure
-    const token = req.headers.authorization?.split(' ')[1];
-    
-    if (!token) {
+    // Check for token in headers
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
       throw new AppError(401, 'Authentication required');
     }
 
-    // We'll add token verification logic here
+    // Extract and verify token
+    const token = authHeader.split(' ')[1];
+    const user = await authService.verifyToken(token);
+
+    // Attach user and token to request
+    req.user = user;
+    req.token = token;
     
     next();
   } catch (error) {
@@ -37,11 +45,11 @@ export const authorize = (...roles: string[]) => {
     if (!req.user) {
       return next(new AppError(401, 'Authentication required'));
     }
-    
+
     if (!roles.includes(req.user.role)) {
       return next(new AppError(403, 'Not authorized'));
     }
-    
+
     next();
   };
 };
