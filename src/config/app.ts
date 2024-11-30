@@ -1,61 +1,43 @@
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import { rateLimit } from 'express-rate-limit';
-import { env } from './env.js';
+import { corsOptions } from './security.js';
 
 export function configureApp(app: express.Application) {
-  // Security middlewares
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:', 'https:'],
-        connectSrc: ["'self'"],
-      },
-    },
-    crossOriginEmbedderPolicy: true,
-    crossOriginOpenerPolicy: true,
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    dnsPrefetchControl: true,
-    frameguard: { action: "deny" },
-    hidePoweredBy: true,
-    hsts: true,
-    ieNoOpen: true,
-    noSniff: true,
-    originAgentCluster: true,
-    permittedCrossDomainPolicies: true,
-    referrerPolicy: { policy: "no-referrer" },
-    xssFilter: true,
-  }));
+  // Basic middleware
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+  app.use(cors(corsOptions));
+  app.use(helmet());
 
-  // CORS configuration
-  app.use(cors({
-    origin: process.env.NODE_ENV === 'production' 
-      ? ['https://your-production-domain.com'] 
-      : true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-    maxAge: 600 // 10 minutes
-  }));
+  // Add error handling for JSON parsing
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (err instanceof SyntaxError && 'body' in err) {
+      return res.status(400).json({
+        error: true,
+        message: 'Invalid JSON',
+        details: err.message
+      });
+    }
+    next();
+  });
 
-  // Rate limiting
-  app.use(rateLimit({
-    windowMs: env.RATE_LIMIT_WINDOW,
-    max: env.RATE_LIMIT_MAX,
-    standardHeaders: 'draft-7',
-    legacyHeaders: false,
-  }));
+  // Add request logging in development
+  if (process.env.NODE_ENV === 'development') {
+    app.use((req, res, next) => {
+      console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
+      next();
+    });
+  }
 
-  // Body parsing
-  app.use(express.json({ limit: '10kb' }));
-  app.use(express.urlencoded({ extended: true, limit: '10kb' }));
-
-  // Performance headers
+  // Add timeout handling
   app.use((req, res, next) => {
-    res.setHeader('Permissions-Policy', 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()');
+    res.setTimeout(30000, () => {
+      res.status(408).json({
+        error: true,
+        message: 'Request timeout'
+      });
+    });
     next();
   });
 }

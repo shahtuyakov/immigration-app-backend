@@ -7,9 +7,9 @@ export interface IUser extends Document {
   firstName: string;
   lastName: string;
   role: 'user' | 'lawyer' | 'admin';
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
-  isActive: boolean;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -20,18 +20,12 @@ const userSchema = new Schema<IUser>({
     unique: true,
     lowercase: true,
     trim: true,
-    validate: {
-      validator: function(v: string) {
-        return /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v);
-      },
-      message: 'Please enter a valid email'
-    }
   },
   password: {
     type: String,
     required: [true, 'Password is required'],
     minlength: [8, 'Password must be at least 8 characters long'],
-    select: false // Don't return password by default in queries
+    select: false // Password won't be included in queries by default
   },
   firstName: {
     type: String,
@@ -56,21 +50,10 @@ const userSchema = new Schema<IUser>({
   timestamps: true
 });
 
-// Hash password before saving
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error: any) {
-    next(error);
-  }
-});
-
-// Method to compare password
+// Remove password hashing from the model - we'll handle it in the service
+// This prevents double hashing issues
 userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+  // The 'this.password' is already the hashed password stored in the database
   return bcrypt.compare(candidatePassword, this.password);
 };
 

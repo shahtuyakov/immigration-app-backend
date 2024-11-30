@@ -5,6 +5,7 @@ import { configureApp } from './config/app.js';
 import { errorHandler } from './utils/errorHandler.js';
 import { connectDatabase } from './config/database.js';
 import authRoutes from './routes/auth.js';
+import debugRoutes from './routes/debug.js';
 
 const app = express();
 
@@ -23,6 +24,12 @@ configureApp(app);
 
 // Apply routes
 app.use('/api/auth', authRoutes);
+
+// Only mount debug routes in development
+if (env.NODE_ENV === 'development') {
+  app.use('/api/debug', debugRoutes);
+  console.log('Debug routes enabled');
+}
 
 // Health check route
 app.get('/health', (req, res) => {
