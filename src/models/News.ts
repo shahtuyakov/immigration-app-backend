@@ -1,60 +1,77 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
-export interface INews extends Document {
-  title: string;
+interface INews extends Document {
+  headline: string;
   content: string;
+  contentSummary: string;
+  imageUrl?: string;
   source: string;
-  url: string;
-  category: string[];
+  author: string;
   publishedAt: Date;
-  thumbnailUrl?: string;
-  isActive: boolean;
-  createdAt: Date;
   updatedAt: Date;
+  region: string;
+  categories: string[];
+  tags: string[];
+  contentLength: number;
+  timezone: string;
 }
 
-const newsSchema = new Schema<INews>({
-  title: {
+const newsSchema = new Schema({
+  headline: {
     type: String,
-    required: [true, 'Title is required'],
-    trim: true
+    required: true,
+    maxLength: 200
   },
   content: {
     type: String,
-    required: [true, 'Content is required']
+    required: true,
+    maxLength: 5000
   },
+  contentSummary: {
+    type: String,
+    required: true,
+    maxLength: 500
+  },
+  imageUrl: String,
   source: {
     type: String,
-    required: [true, 'Source is required'],
-    trim: true
+    required: true
   },
-  url: {
-    type: String,
-    required: [true, 'URL is required'],
-    unique: true
-  },
-  category: [{
-    type: String,
-    required: [true, 'At least one category is required']
-  }],
+  author: String,
   publishedAt: {
     type: Date,
     required: true
   },
-  thumbnailUrl: {
-    type: String
+  updatedAt: Date,
+  region: {
+    type: String,
+    required: true
   },
-  isActive: {
-    type: Boolean,
-    default: true
+  categories: [{
+    type: String,
+    enum: [
+      'Policy Updates',
+      'Visa Changes',
+      'Immigration Law',
+      'Court Decisions',
+      'USCIS Updates',
+      'Border Updates',
+      'Employment Immigration',
+      'Family Immigration'
+    ]
+  }],
+  tags: [String],
+  contentLength: Number,
+  timezone: {
+    type: String,
+    default: 'America/Chicago'
   }
-}, {
-  timestamps: true
 });
 
-// Indexes for faster queries
-newsSchema.index({ category: 1, publishedAt: -1 });
-newsSchema.index({ publishedAt: -1 });
-newsSchema.index({ url: 1 }, { unique: true });
+// Auto-calculate content length before save
+newsSchema.pre('save', function(next) {
+  this.contentLength = this.content.length;
+  next();
+});
 
 export const News = mongoose.model<INews>('News', newsSchema);
