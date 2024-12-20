@@ -1,19 +1,18 @@
+// src/services/NewsService.ts
 import { News } from '../models/News.js';
 import { AppError } from '../utils/errorHandler.js';
 
 export class NewsService {
-  // Create
-  async createNews(newsData: Partial<INews>): Promise<INews> {
+  async createNews(newsData: any): Promise<any> {
     try {
       const news = await News.create(newsData);
       return news;
     } catch (error) {
-      throw new AppError(400, 'Failed to create news item');
+      throw new AppError(400, 'Failed to create news');
     }
   }
 
-  // Read - Get all with pagination and filters
-  async getNews(filters: any = {}, page = 1, limit = 10): Promise<{ news: INews[]; total: number }> {
+  async getNews(filters: any = {}, page = 1, limit = 10): Promise<{ news: any[]; total: number }> {
     try {
       const skip = (page - 1) * limit;
       const news = await News.find(filters)
@@ -27,43 +26,59 @@ export class NewsService {
     }
   }
 
-  // Read - Get single
-  async getNewsById(id: string): Promise<INews> {
-    const news = await News.findById(id);
-    if (!news) throw new AppError(404, 'News item not found');
-    return news;
+  async getNewsById(id: string): Promise<any> {
+    try {
+      const news = await News.findById(id);
+      if (!news) {
+        throw new AppError(404, 'News not found');
+      }
+      return news;
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError(500, 'Failed to fetch news');
+    }
   }
 
-  // Update
-  async updateNews(id: string, updateData: Partial<INews>): Promise<INews> {
-    const news = await News.findByIdAndUpdate(
-      id,
-      { ...updateData, updatedAt: new Date() },
-      { new: true, runValidators: true }
-    );
-    if (!news) throw new AppError(404, 'News item not found');
-    return news;
+  async updateNews(id: string, updateData: any): Promise<any> {
+    try {
+      const news = await News.findByIdAndUpdate(
+        id,
+        { ...updateData, updatedAt: new Date() },
+        { new: true, runValidators: true }
+      );
+      if (!news) {
+        throw new AppError(404, 'News not found');
+      }
+      return news;
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError(500, 'Failed to update news');
+    }
   }
 
-  // Delete
   async deleteNews(id: string): Promise<void> {
-    const news = await News.findByIdAndDelete(id);
-    if (!news) throw new AppError(404, 'News item not found');
+    try {
+      const news = await News.findByIdAndDelete(id);
+      if (!news) {
+        throw new AppError(404, 'News not found');
+      }
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError(500, 'Failed to delete news');
+    }
   }
 
-  // Search by keywords
-  async searchNews(query: string): Promise<INews[]> {
-    return News.find({
-      $or: [
-        { headline: { $regex: query, $options: 'i' } },
-        { content: { $regex: query, $options: 'i' } },
-        { tags: { $in: [new RegExp(query, 'i')] } }
-      ]
-    });
-  }
-
-  // Filter by category
-  async getNewsByCategory(category: string): Promise<INews[]> {
-    return News.find({ categories: category });
+  async searchNews(query: string): Promise<any[]> {
+    try {
+      return await News.find({
+        $or: [
+          { headline: { $regex: query, $options: 'i' } },
+          { content: { $regex: query, $options: 'i' } },
+          { tags: { $in: [new RegExp(query, 'i')] } }
+        ]
+      });
+    } catch (error) {
+      throw new AppError(500, 'Failed to search news');
+    }
   }
 }

@@ -40,7 +40,10 @@ export class NewsController {
 
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const news = await this.newsService.updateNews(req.params.id, req.body);
+      const news = await this.newsService.updateNews(
+        req.params.id, // Changed from req.body.id
+        req.body
+      );
       res.json(createSuccessResponse(news, 'News updated successfully'));
     } catch (error) {
       next(error);
