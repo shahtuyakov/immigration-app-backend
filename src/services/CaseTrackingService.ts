@@ -21,10 +21,6 @@ export class CaseTrackingService {
   private readonly CASE_NUMBER_REGEX = /^[A-Z]{3}[0-9]{9}$/;
 
   async trackCase(userId: string, caseNumber: string): Promise<ImmigrationCase> {
-    // if (!this.CASE_NUMBER_REGEX.test(caseNumber)) {
-    //   throw new AppError(400, 'Invalid case number format. Expected format: ABC123456789');
-    // }
-
     try {
       const token = await this.getUSCISToken();
       const caseData = await this.fetchCaseStatus(caseNumber, token);
@@ -118,6 +114,40 @@ export class CaseTrackingService {
     } catch (error) {
       console.error('Case save error:', error);
       throw new AppError(500, 'Failed to save case data');
+    }
+  }
+
+  async getUserCases(userId: string): Promise<ImmigrationCase[]> {
+    try {
+      return await ImmigrationCase.find({ userId: new mongoose.Types.ObjectId(userId) })
+        .sort({ updatedAt: -1 });
+    } catch (error) {
+      console.error('Get user cases error:', error);
+      throw new AppError(500, 'Failed to fetch user cases');
+    }
+  }
+
+  async getCaseById(userId: string, caseId: string): Promise<ImmigrationCase> {
+    try {
+      // First validate if the caseId is a valid MongoDB ObjectId
+      if (!mongoose.Types.ObjectId.isValid(caseId)) {
+        throw new AppError(400, 'Invalid case ID format');
+      }
+
+      const immigrationCase = await ImmigrationCase.findOne({
+        _id: new mongoose.Types.ObjectId(caseId),
+        userId: new mongoose.Types.ObjectId(userId)
+      });
+
+      if (!immigrationCase) {
+        throw new AppError(404, 'Immigration case not found or you do not have access to it');
+      }
+
+      return immigrationCase;
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      console.error('Get case by id error:', error);
+      throw new AppError(500, 'Failed to fetch case details');
     }
   }
 }

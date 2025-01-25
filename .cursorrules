@@ -146,43 +146,12 @@
 
     Proposed Database Schema (MongoDB)
 
-    User Schema
+    User Schema - src/schemas/userSchemas.ts
 
-    typescriptCopy{
-    _id: ObjectId,
-    email: string,
-    passwordHash: string,
-    firstName: string,
-    lastName: string,
-    encryptedPersonalInfo: EncryptedData,
-    role: 'user' | 'lawyer' | 'admin',
-    createdAt: Date
-    }
+    Immigration Case Schema - src/schemas/caseSchemas.ts
 
-    Immigration Case Schema
+    Lawyer Schema - src/schemas/lawyerSchemas.ts
 
-    typescriptCopy{
-    _id: ObjectId,
-    userId: ObjectId,
-    caseNumber: string,
-    status: string,
-    documentLinks: string[],
-    encryptedDetails: EncryptedData,
-    lastUpdated: Date
-    }
-
-    Lawyer Schema
-
-    typescriptCopy{
-    _id: ObjectId,
-    name: string,
-    specialization: string[],
-    availableSlots: Slot[],
-    contactInfo: {
-        email: string,
-        phone: string
-    }
-    }
     Potential Challenges and Mitigation
 
     API Rate Limits
@@ -255,20 +224,3 @@
     ├── package.json
     ├── tsconfig.json
     └── README.md
-
-# KEY DEPENDENCIES
-    {
-        "dependencies": {
-            "express": "^4.18.2",
-            "mongoose": "^8.0.3",
-            "cors": "^2.8.5",
-            "helmet": "^7.1.0",
-            "jsonwebtoken": "^9.0.2",
-            "bcryptjs": "^2.4.3"
-        },
-        "devDependencies": {
-            "typescript": "^5.3.3",
-            "tsx": "latest",
-            "nodemon": "^3.0.2"
-        }
-    }

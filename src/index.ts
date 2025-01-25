@@ -8,7 +8,6 @@ import { connectDatabase } from './config/database.js';
 import authRoutes from './routes/auth.js';
 import newsRoutes from './routes/news.js';
 import userManagementRoutes from './routes/userManagement.js';
-import caseTrackingRoutes from './routes/caseTracking.js';
 import casesRouter from './routes/cases.js';
 
 const app = express();
@@ -23,7 +22,6 @@ configureApp(app);
 app.use('/api/auth', authRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/admin', userManagementRoutes);
-app.use('/api/case-tracking', caseTrackingRoutes);
 app.use('/api/cases', casesRouter);
 
 // Health check route

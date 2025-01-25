@@ -17,4 +17,23 @@ export class CaseTrackingController {
       next(error);
     }
   };
+
+  getUserCases = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const cases = await this.caseTrackingService.getUserCases(req.user!.id);
+      res.json(createSuccessResponse(cases, 'Cases retrieved successfully'));
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getCaseById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { caseId } = req.params;
+      const caseDetails = await this.caseTrackingService.getCaseById(req.user!.id, caseId);
+      res.json(createSuccessResponse(caseDetails, 'Case details retrieved successfully'));
+    } catch (error) {
+      next(error);
+    }
+  };
 }
