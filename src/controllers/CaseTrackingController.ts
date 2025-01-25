@@ -8,30 +8,11 @@ export class CaseTrackingController {
   constructor() {
     this.caseTrackingService = new CaseTrackingService();
   }
-
-  addCase = async (req: Request, res: Response, next: NextFunction) => {
+  trackCase = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { caseNumber, name } = req.body;
-      const case_ = await this.caseTrackingService.addCase(req.user!.id, { caseNumber, name });
-      res.status(201).json(createSuccessResponse(case_, 'Case added successfully'));
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  getCases = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const cases = await this.caseTrackingService.getUserCases(req.user!.id);
-      res.json(createSuccessResponse({ cases }));
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  refreshStatus = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const case_ = await this.caseTrackingService.refreshCaseStatus(req.params.id);
-      res.json(createSuccessResponse(case_, 'Case status updated'));
+      const { caseNumber } = req.body;
+      const caseResult = await this.caseTrackingService.trackCase(req.user!.id, caseNumber);
+      res.json(createSuccessResponse(caseResult, 'Case tracked successfully'));
     } catch (error) {
       next(error);
     }

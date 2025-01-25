@@ -1,14 +1,16 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export interface IImmigrationCase extends Document {
+export interface ImmigrationCase extends Document<mongoose.Types.ObjectId> {
   userId: mongoose.Types.ObjectId;
   caseNumber: string;
-  name: string;
-  status: string;
-  description: string;
-  formNumber: string;
-  formTitle: string;
-  lastUpdated: Date;
+  formType: string;
+  submittedDate: Date;
+  modifiedDate: Date;
+  currentStatusTextEn: string;
+  currentStatusDescEn: string;
+  currentStatusTextEs: string;
+  currentStatusDescEs: string;
+  historyStatus: any; // You might want to define a more specific type for this later
 }
 
 const immigrationCaseSchema = new Schema({
@@ -18,7 +20,7 @@ const immigrationCaseSchema = new Schema({
     required: true
   },
   caseNumber: {
-    type: String,
+    type: String,   
     required: true,
     trim: true
   },
@@ -30,6 +32,35 @@ const immigrationCaseSchema = new Schema({
   description: String,
   formNumber: String,
   formTitle: String,
+  formType: {
+    type: String,
+    required: true
+  },
+  submittedDate: {
+    type: Date,
+    required: true
+  },
+  modifiedDate: {
+    type: Date,
+    required: true
+  },
+  currentStatusTextEn: {
+    type: String,
+    required: true
+  },
+  currentStatusDescEn: {
+    type: String,
+    required: true
+  },
+  currentStatusTextEs: {
+    type: String,
+    required: true
+  },
+  currentStatusDescEs: {
+    type: String,
+    required: true
+  },
+  historyStatus: Schema.Types.Mixed, // Consider defining a more specific schema later
   lastUpdated: {
     type: Date,
     default: Date.now
@@ -39,4 +70,4 @@ const immigrationCaseSchema = new Schema({
 });
 
 mongoose.deleteModel(/^ImmigrationCase/);
-export const ImmigrationCase = mongoose.model<IImmigrationCase>('ImmigrationCase', immigrationCaseSchema);
+export const ImmigrationCase = mongoose.model<ImmigrationCase>('ImmigrationCase', immigrationCaseSchema);

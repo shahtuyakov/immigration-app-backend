@@ -7,8 +7,8 @@ const controller = new CaseTrackingController();
 
 router.use(authenticate);
 
-router.post('/', controller.addCase);
-router.get('/', controller.getCases);
-router.patch('/:id/refresh', controller.refreshStatus);
+// router.post('/', controller.addCase);
+// router.get('/', controller.getCases);
+// router.patch('/:id/refresh', controller.refreshStatus);
 
 export default router;
