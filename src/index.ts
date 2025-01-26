@@ -6,6 +6,7 @@ import { errorHandler } from './utils/errorHandler.js';
 import { connectDatabase } from './config/database.js';
 
 import authRoutes from './routes/auth.js';
+import oauthRoutes from './routes/oauth.js';
 import newsRoutes from './routes/news.js';
 import userManagementRoutes from './routes/userManagement.js';
 import casesRouter from './routes/cases.js';
@@ -20,6 +21,7 @@ configureApp(app);
 
 // Mount routes
 app.use('/api/auth', authRoutes);
+app.use('/api/auth/oauth', oauthRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/admin', userManagementRoutes);
 app.use('/api/cases', casesRouter);
