@@ -42,9 +42,6 @@ export class NewsAPIService {
 
       const keywords = [
         "US immigration",
-        "USCIS updates",
-        "immigration policy",
-        "visa updates",
       ];
 
       const newsPromises = keywords.map((keyword) =>
