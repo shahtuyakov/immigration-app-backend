@@ -1,14 +1,13 @@
 import { CorsOptions } from 'cors';
-import { env } from './env.js';
+import { env } from '../config/env.js';
 
 export const corsOptions: CorsOptions = {
-  origin: env.NODE_ENV === 'production' 
-    ? [env.CLIENT_URL] // We'll need to add CLIENT_URL to env variables
-    : true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  origin: env.CLIENT_URL,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
   credentials: true,
-  maxAge: 600
+  maxAge: 600 // 10 minutes
 };
 
 export const securityConfig = {

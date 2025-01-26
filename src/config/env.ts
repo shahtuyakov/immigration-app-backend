@@ -1,8 +1,12 @@
 import dotenv from 'dotenv';
 import { z } from 'zod';
 
-// Load .env file
-dotenv.config();
+// Load .env file before any validation
+const result = dotenv.config();
+
+if (result.error) {
+  throw new Error('Failed to load .env file');
+}
 
 // Define environment variable schema
 const envSchema = z.object({
@@ -57,13 +61,20 @@ const envSchema = z.object({
   RAPIDAPI_HOST: z.string(),
 });
 
-// Create type from schema
-type Env = z.infer<typeof envSchema>;
+// Validate environment variables
+let validatedEnv: z.infer<typeof envSchema>;
 
-// Validate and export environment variables
-export const env: Env = envSchema.parse(process.env);
+try {
+  validatedEnv = envSchema.parse(process.env);
+} catch (error) {
+  console.error('❌ Invalid environment variables:', error);
+  process.exit(1);
+}
 
-// Export individual constants for convenience
+// Export the validated env object
+export const env = validatedEnv;
+
+// Export individual constants
 export const {
   NODE_ENV,
   PORT,
@@ -95,4 +106,4 @@ export const {
   APPLE_PRIVATE_KEY,
   RAPIDAPI_KEY,
   RAPIDAPI_HOST,
-} = env;
+} = validatedEnv;

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { MongoError } from 'mongodb';
 import { Error as MongooseError } from 'mongoose';
+import { env } from '../config/env.js';
 
 export class AppError extends Error {
   constructor(
@@ -24,7 +25,7 @@ export const errorHandler = (
     return res.status(err.statusCode).json({
       status: 'error',
       message: err.message,
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+      ...(env.NODE_ENV === 'development' && { stack: err.stack })
     });
   }
 
@@ -52,7 +53,7 @@ export const errorHandler = (
   return res.status(500).json({
     status: 'error',
     message: 'Something went wrong',
-    ...(process.env.NODE_ENV === 'development' && { 
+    ...(env.NODE_ENV === 'development' && { 
       error: err,
       stack: err.stack 
     })

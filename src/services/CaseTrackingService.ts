@@ -2,6 +2,7 @@
 import mongoose from 'mongoose';
 import { ImmigrationCase } from '../models/ImmigrationCase.js';
 import { AppError } from '../utils/errorHandler.js';
+import { env } from '../config/env.js';
 import axios from 'axios';
 
 interface USCISCaseStatus {
@@ -35,8 +36,8 @@ export class CaseTrackingService {
     try {
       const params = new URLSearchParams({
         grant_type: 'client_credentials',
-        client_id: process.env.USCIS_CLIENT_ID!,
-        client_secret: process.env.USCIS_CLIENT_SECRET!
+        client_id: env.USCIS_CLIENT_ID!,
+        client_secret: env.USCIS_CLIENT_SECRET!
       });
 
       const response = await axios.post(

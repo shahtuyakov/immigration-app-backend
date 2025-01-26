@@ -1,7 +1,7 @@
 import { env } from '../src/config/env.js';
 
 // Test environment setup
-process.env.NODE_ENV = 'test';
+env.NODE_ENV = 'test';
 
 // Test database configuration
 export const TEST_DB_URI = 'mongodb://localhost:27017/immigration-app-test';

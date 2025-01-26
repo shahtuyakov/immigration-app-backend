@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
 import { AppError } from "../utils/errorHandler.js";
 import { AuthService } from "./AuthService.js";
+import { env } from "../config/env.js";
 
 export class OAuthService {
   private googleClient: OAuth2Client;

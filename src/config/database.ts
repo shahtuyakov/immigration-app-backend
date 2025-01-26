@@ -1,6 +1,6 @@
 // src/config/database.ts
 import mongoose from 'mongoose';
-import { env } from './env.js';
+import { env } from '../config/env.js';
 
 export async function connectDatabase() {
   try {
