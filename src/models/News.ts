@@ -50,14 +50,7 @@ const newsSchema = new Schema({
   categories: [{
     type: String,
     enum: [
-      'Policy Updates',
-      'Visa Changes',
-      'Immigration Law',
-      'Court Decisions',
-      'USCIS Updates',
-      'Border Updates',
-      'Employment Immigration',
-      'Family Immigration'
+      'Immigration News'
     ]
   }],
   tags: [String],

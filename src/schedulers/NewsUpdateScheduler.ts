@@ -31,7 +31,16 @@ export class NewsUpdateScheduler {
       await this.newsAPIService.fetchImmigrationNews();
       console.log("News update completed:", new Date().toISOString());
     } catch (error) {
-      console.error("News update failed:", error);
+      console.error("News update failed:", {
+        message: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Implement retry logic
+      // setTimeout(() => {
+      //   this.fetchNews();
+      // }, 15 * 60 * 1000); // Retry after 15 minutes
     }
   }
 }

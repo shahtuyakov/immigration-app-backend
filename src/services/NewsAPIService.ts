@@ -4,18 +4,19 @@ import { AppError } from "../utils/errorHandler.js";
 import { News } from "../models/News.js";
 
 interface NewsAPIResponse {
-    articles: Array<{
-      title: string;
-      snippet: string;
-      publisher: string;
-      timestamp: string;
-      newsUrl: string;
-      images: {
-        thumbnail: string;
-        thumbnailProxied: string;
-      };
-    }>;
-  }
+  status: string;
+  items: Array<{
+    title: string;
+    snippet: string;
+    publisher: string;
+    timestamp: string;
+    newsUrl: string;
+    images: {
+      thumbnail: string;
+      thumbnailProxied: string;
+    };
+  }>;
+}
 
 export class NewsAPIService {
   private api: AxiosInstance;
@@ -35,14 +36,11 @@ export class NewsAPIService {
 
   async fetchImmigrationNews(): Promise<void> {
     try {
-      // Check cache
       if (this.isCacheValid()) {
         return;
       }
 
-      const keywords = [
-        "US immigration",
-      ];
+      const keywords = ["US immigration"];
 
       const newsPromises = keywords.map((keyword) =>
         this.api.get<NewsAPIResponse>("/search", {
@@ -54,12 +52,16 @@ export class NewsAPIService {
       );
 
       const responses = await Promise.all(newsPromises);
-      const articles = responses.flatMap((response) => response.data.articles);
+      const articles = responses.flatMap((response) => {
+        if (!response.data?.items) {
+          console.warn('No items found in response:', response.data);
+          return [];
+        }
+        return response.data.items;
+      });
 
-      // Process and store news
       await this.processAndStoreNews(articles);
 
-      // Update cache
       this.lastFetch = Date.now();
       this.cachedNews = { articles };
     } catch (error) {
@@ -69,23 +71,41 @@ export class NewsAPIService {
   }
 
   private async processAndStoreNews(
-    articles: NewsAPIResponse["articles"]
+    articles: NewsAPIResponse["items"]
   ): Promise<void> {
     for (const article of articles) {
-      const existingNews = await News.findOne({ headline: article.title });
-      if (!existingNews) {
-        await News.create({
-          headline: article.title,
-          content: article.snippet,
-          contentSummary: article.snippet.substring(0, 200),
-          imageUrl: article.images.thumbnail,
-          source: article.publisher,
-          url: article.newsUrl,
-          publishedAt: new Date(article.timestamp),
-          region: "United States",
-          categories: ["Immigration News"],
-          tags: ["news", "immigration"],
-        });
+      try {
+        if (!article.title) {
+          console.warn('Skipping article with no title:', article);
+          continue;
+        }
+
+        const existingNews = await News.findOne({ headline: article.title });
+        if (!existingNews) {
+          await News.create({
+            headline: article.title,
+            content: article.snippet || '',
+            contentSummary: article.snippet ? article.snippet.substring(0, 200) : '',
+            imageUrl: article.images?.thumbnail || '',
+            source: article.publisher || 'Unknown',
+            url: article.newsUrl || '',
+            publishedAt: article.timestamp ? new Date(Number(article.timestamp)) : new Date(),
+            region: "United States",
+            categories: ["Immigration News"],
+            tags: ["news", "immigration"],
+          });
+        }
+      } catch (error) {
+        if (error.name === 'ValidationError') {
+          console.error('Validation error while processing article:', {
+            articleTitle: article.title,
+            errors: error.errors,
+            validationMessage: error.message
+          });
+        } else {
+          console.error(`Error processing article ${article.title}:`, error);
+        }
+        continue;
       }
     }
   }
