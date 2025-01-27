@@ -63,7 +63,7 @@ export class NewsAPIService {
       await this.processAndStoreNews(articles);
 
       this.lastFetch = Date.now();
-      this.cachedNews = { articles };
+      this.cachedNews = { items: articles, status: "ok" };
     } catch (error) {
       console.error("Error fetching news:", error);
       throw new AppError(500, "Failed to fetch immigration news");
@@ -96,10 +96,10 @@ export class NewsAPIService {
           });
         }
       } catch (error) {
-        if (error.name === 'ValidationError') {
+        if (error instanceof Error && 'name' in error && error.name === 'ValidationError') {
           console.error('Validation error while processing article:', {
             articleTitle: article.title,
-            errors: error.errors,
+            errors: error,
             validationMessage: error.message
           });
         } else {
