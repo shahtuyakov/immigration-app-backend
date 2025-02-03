@@ -113,30 +113,6 @@ An iOS mobile application designed to assist immigrants in managing their immigr
 - Responsive layouts
 - Native iOS design patterns
 
-### Key Screens
-1. Dashboard
-   - Case status overview
-   - Recent news
-   - Upcoming appointments
-   - Important deadlines
-
-2. Case Management
-   - Case details
-   - Status timeline
-   - Action items
-
-3. News Feed
-   - Categorized articles
-   - Search functionality
-   - Filtering options
-   - Saved articles
-
-4. Lawyer Directory
-   - Search interface
-   - Filtering options
-   - Profile views
-   - Booking system
-
 ## Data Management
 
 ### User Data
