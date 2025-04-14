@@ -18,7 +18,7 @@ export async function connectDatabase() {
 
     console.log('Attempting to connect to MongoDB...');
     
-    await mongoose.connect(env.MONGODB_URI, options);
+    await mongoose.connect(env.MONGODB_URI, options as mongoose.ConnectOptions);
     
     mongoose.connection.on('connected', () => {
       console.log('MongoDB connection established successfully');

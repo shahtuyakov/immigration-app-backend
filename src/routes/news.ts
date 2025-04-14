@@ -1,4 +1,3 @@
-// src/routes/news.ts
 import { Router } from 'express';
 import { NewsController } from '../controllers/NewsController.js';
 import { NewsUploadController } from '../controllers/NewsUploadController.js';

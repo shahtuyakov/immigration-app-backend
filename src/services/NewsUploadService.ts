@@ -2,9 +2,9 @@ import { News } from '../models/News.js';
 import { AppError } from '../utils/errorHandler.js';
 
 export class NewsUploadService {
-  async uploadNews(newsData: Partial<INews>, userId: string): Promise<INews> {
+  async uploadNews(newsData: any, userId: string): Promise<any> {
     try {
-      // Add validation for required fields
+      // Add validation for required fields 
       if (!newsData.headline || !newsData.content || !newsData.source) {
         throw new AppError(400, 'Missing required fields');
       }

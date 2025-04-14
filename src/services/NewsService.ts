@@ -1,4 +1,3 @@
-// src/services/NewsService.ts
 import { News } from '../models/News.js';
 import { AppError } from '../utils/errorHandler.js';
 
