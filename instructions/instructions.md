@@ -1,7 +1,7 @@
 # Immigration Assistant App - Product Requirements Document
 
 ## Product Overview
-An iOS mobile application designed to assist immigrants in managing their immigration process by providing case tracking, news updates, and lawyer consultation services.
+An iOS mobile application designed to assist immigrants in managing their immigration process by providing case tracking, news access, and lawyer consultation services.
 
 ## Target Audience
 - Primary: Immigrants navigating the US immigration system
@@ -34,14 +34,13 @@ An iOS mobile application designed to assist immigrants in managing their immigr
 - Deadline tracking
 
 #### Technical Specifications
-- Real-time USCIS API integration
+- USCIS API integration for case status verification
 - End-to-end encryption for sensitive data
-- Automated status checks
 - Push notification system
 
-### 3. News Aggregation
+### 3. News Access
 #### Requirements
-- Daily immigration news updates
+- Access to stored immigration news articles
 - Categorized news feed
 - Customizable notifications
 - Content filtering by category
@@ -57,6 +56,11 @@ An iOS mobile application designed to assist immigrants in managing their immigr
 - Border Updates
 - Employment Immigration
 - Family Immigration
+
+#### Technical Implementation
+- News is stored in MongoDB database
+- No automatic external API fetching
+- API endpoints for filtering, searching, and retrieving news
 
 ### 4. Lawyer Consultation System
 #### Requirements
@@ -115,6 +119,13 @@ An iOS mobile application designed to assist immigrants in managing their immigr
 
 ## Data Management
 
+### News Data Management
+- News articles stored in MongoDB
+- Regular data backups
+- Database indexes for fast querying
+- Support for text search
+- Category-based organization
+
 ### User Data
 - Personal information
 - Case details
@@ -135,6 +146,7 @@ An iOS mobile application designed to assist immigrants in managing their immigr
 4. Multi-platform support
 5. Advanced analytics
 6. Integration with additional government systems
+7. Automated news aggregation system (separate from main application)
 
 ## Success Metrics
 - User acquisition rate

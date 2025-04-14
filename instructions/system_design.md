@@ -1,122 +1,164 @@
-# SYSTEM DESIGN
+# Project Structure Documentation
 
-- System Architecture Overview
-    - Tech Stack:
-        - Programming Language: Node.js with TypeScript
-        - Backend Framework: Express.js or NestJS
-        - Cloud Provider: Azure
-        - Database: MongoDB (for flexible schema) with Azure Cosmos DB
-        - Authentication: JWT with Azure Active Directory B2C
-    Monitoring: New Relic
-    News API Integration: Multiple news sources APIs
+This document outlines the current structure of the Immigration App Backend project, highlighting the key components and their relationships.
 
-    Key Components:
+## Directory Structure
 
-    - Authentication and User Management
+```
+immigration-app-backend/
+├── src/                          # Source code
+│   ├── config/                   # Configuration files
+│   │   ├── app.ts               # Express app configuration
+│   │   ├── database.ts          # MongoDB connection
+│   │   ├── env.ts               # Environment variable validation
+│   │   └── security.ts          # Security-related configuration
+│   │
+│   ├── controllers/             # Request handlers
+│   │   ├── AuthController.ts    # Authentication operations
+│   │   ├── CaseTrackingController.ts # Case tracking
+│   │   ├── NewsController.ts    # News retrieval
+│   │   ├── OAuthController.ts   # Social login
+│   │   └── UserManagementController.ts # User administration
+│   │
+│   ├── interfaces/              # TypeScript interfaces
+│   │   └── dtos/                # Data Transfer Objects
+│   │       └── UserDTO.ts       # User-related DTOs
+│   │
+│   ├── middlewares/             # Express middlewares
+│   │   ├── auth.ts              # Authentication middleware
+│   │   └── validateRequest.ts   # Request validation with Zod
+│   │
+│   ├── models/                  # MongoDB models
+│   │   ├── ImmigrationCase.ts   # Case tracking model
+│   │   ├── News.ts              # News article model
+│   │   └── User.ts              # User model
+│   │
+│   ├── routes/                  # API routes
+│   │   ├── auth.ts              # Authentication routes
+│   │   ├── cases.ts             # Case tracking routes
+│   │   ├── news.ts              # News routes
+│   │   ├── oauth.ts             # OAuth routes
+│   │   └── userManagement.ts    # User management routes
+│   │
+│   ├── services/                # Business logic
+│   │   ├── AuthService.ts       # Authentication logic
+│   │   ├── BaseService.ts       # Common CRUD operations
+│   │   ├── CaseTrackingService.ts # Case tracking logic
+│   │   ├── EmailService.ts      # Email sending functionality
+│   │   ├── NewsService.ts       # News retrieval logic
+│   │   ├── OAuthService.ts      # OAuth integration
+│   │   ├── USCISApiService.ts   # USCIS API integration
+│   │   └── UserManagementService.ts # User administration
+│   │
+│   ├── utils/                   # Utility functions
+│   │   ├── apiResponse.ts       # Standardized API responses
+│   │   └── errorHandler.ts      # Error handling
+│   │
+│   └── index.ts                 # Application entry point
+│
+├── tests/                       # Test files
+│   ├── integration/             # Integration tests
+│   ├── unit/                    # Unit tests
+│   └── helpers/                 # Test helpers
+│
+├── .env                         # Environment variables (not in repo)
+├── .env.backup                  # Template for environment variables
+├── .gitignore                   # Git ignore file
+├── nodemon.json                 # Nodemon configuration
+├── package.json                 # Project dependencies
+├── tsconfig.json                # TypeScript configuration
+└── README.md                    # Project documentation
+```
 
-    - Implement secure user registration and login
-    - Use Azure Active Directory B2C for robust authentication
-    - Implement role-based access control (RBAC)
-    - Encrypt sensitive user information at rest and in transit
-    - Implement multi-factor authentication
+## Key Components
 
-    - Data Storage Architecture
+### 1. News Subsystem
 
-    - User Collection: Store user profiles, encrypted personal information
-    - Immigration Cases Collection: Store case details with access controls
-    - Lawyers Collection: Store lawyer profiles and availability
-    - News Collection: Cache and store aggregated news items
+The news subsystem has been simplified to focus on database operations rather than external API fetching:
 
-    - News Aggregation System
+- `NewsController`: Handles HTTP requests for news data
+- `NewsService`: Provides methods to query the database for news articles
+- `News` model: Represents news articles in the database
 
-    - Implement background workers to fetch news from multiple APIs
-    - Use cron jobs to periodically update news feed
-    - Implement caching mechanism to reduce API call costs
-    - Potential news sources:
+News is stored in the MongoDB database and accessed through API endpoints that support:
+- Pagination
+- Category filtering
+- Text search
+- Retrieval of recent news
 
-    Immigration-focused news APIs
-    Government immigration websites
-    Specialized immigration news platforms
+### 2. Case Tracking Subsystem
 
-    - Lawyer Appointment Scheduling
+The case tracking subsystem allows users to track their immigration cases:
 
-    - Create a booking system with lawyer availability slots
-    - Implement reservation and cancellation mechanisms
-    - Send confirmation emails/notifications
+- `CaseTrackingController`: Handles HTTP requests for case tracking
+- `CaseTrackingService`: Manages case tracking logic, including USCIS API integration
+- `USCISApiService`: Low-level service for communicating with USCIS APIs
+- `ImmigrationCase` model: Represents case data in the database
 
-    Security Considerations
+### 3. Authentication Subsystem
 
-    - Use Azure Key Vault for secret management
-    - Implement data encryption for sensitive fields
-    - Follow GDPR and CCPA compliance guidelines
-    - Use HTTPS for all communications
-    - Implement rate limiting and input validation
+The authentication subsystem manages user identity and access:
 
-    - API Endpoints Design
-    - typescriptCopy// User Authentication Endpoints
-    - POST /auth/register
-    - POST /auth/login
-    - POST /auth/reset-password
+- `AuthController`: Handles registration, login, and related operations
+- `AuthService`: Manages authentication logic
+- `OAuthController` and `OAuthService`: Handle social login
+- Authentication middlewares: Protect routes and enforce permissions
+- `User` model: Represents user data in the database
 
-    // News Endpoints
-    - GET /news/latest
-    - GET /news/categories
-    - GET /news/search
+### 4. Configuration
 
-    // Immigration Case Endpoints
-    POST /cases/create
-    - GET /cases/:caseId
-    - PUT /cases/:caseId
-    - DELETE /cases/:caseId
+- Environment variables: Centralized in `env.ts` with validation
+- Express configuration: In `app.ts`
+- Security settings: In `security.ts`
+- Database connection: In `database.ts`
 
-    // Lawyer Endpoints
-    - GET /lawyers
-    - GET /lawyers/:lawyerId
-    - POST /appointments/book
-    - GET /appointments/available-slots
+## API Endpoints
 
-    - Monitoring and Logging
+### Authentication
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/refresh-token`
+- `GET /api/auth/profile`
+- `PUT /api/auth/profile`
+- `POST /api/auth/logout`
+- `POST /api/auth/logout-all`
+- `POST /api/auth/password/change`
+- `POST /api/auth/password/forgot`
+- `POST /api/auth/password/reset`
 
-    Integrate New Relic for:
+### OAuth
+- `POST /api/auth/oauth/google`
+- `POST /api/auth/oauth/apple`
 
-    - Performance monitoring
-    - Error tracking
-    - System health checks
-    - Resource utilization tracking
+### News
+- `GET /api/news` (with optional filtering and pagination)
+- `GET /api/news/:id`
+- `GET /api/news/search`
+- `GET /api/news/recent`
 
-    Scalability Considerations
+### Case Tracking
+- `POST /api/cases/track`
+- `GET /api/cases/my-cases`
+- `GET /api/cases/:caseId`
 
-    Use Azure Kubernetes Service (AKS) for container orchestration
-    - Implement horizontal scaling
-    - Use message queues for asynchronous processing
-    - Implement caching with Redis
+### User Management
+- `GET /api/admin/users`
+- `GET /api/admin/users/:userId`
+- `PUT /api/admin/users/:userId/role`
 
-    Proposed Database Schema (MongoDB)
+## Data Flow
 
-    User Schema - src/schemas/userSchemas.ts
+1. User requests are received by Express routes
+2. Middleware handles authentication and validation
+3. Controllers process the request
+4. Services contain the business logic
+5. Models interact with the MongoDB database
+6. Responses are formatted and returned to the user
 
-    - Immigration Case Schema - src/schemas/caseSchemas.ts
+## Development Workflow
 
-    - Lawyer Schema - src/schemas/lawyerSchemas.ts
-
-    Potential Challenges and Mitigation
-
-    API Rate Limits
-
-    Implement robust caching
-    Use multiple news API sources
-    Handle API failures gracefully
-
-    Data Privacy
-
-    - Use encryption for sensitive data
-    - Implement strict access controls
-    - Regular security audits
-
-    Recommended Next Steps
-
-    - Create detailed API documentation
-    - Set up development environment
-    - Implement basic authentication flow
-    - Create database migration scripts
-    - Set up CI/CD pipeline with Azure DevOps
+1. Environment setup: Copy `.env.backup` to `.env` and configure
+2. Install dependencies: `npm install`
+3. Start development server: `npm run dev`
+4. Run tests: `npm test`
+5. Build for production: `npm run build`
