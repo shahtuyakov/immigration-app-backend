@@ -9,21 +9,26 @@ export class NewsController {
     this.newsService = new NewsService();
   }
 
-  create = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const news = await this.newsService.createNews(req.body);
-      res.status(201).json(createSuccessResponse(news, 'News created successfully'));
-    } catch (error) {
-      next(error);
-    }
-  };
-
   getAll = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { page = 1, limit = 10, category, search } = req.query;
-      const filters = category ? { categories: category } : {};
-      const result = await this.newsService.getNews(filters, Number(page), Number(limit));
-      res.json(createSuccessResponse(result));
+      const { page = 1, limit = 10, category } = req.query;
+      
+      let result;
+      if (category) {
+        result = await this.newsService.getNewsByCategory(
+          category as string, 
+          Number(page), 
+          Number(limit)
+        );
+      } else {
+        result = await this.newsService.getNews(
+          {}, 
+          Number(page), 
+          Number(limit)
+        );
+      }
+      
+      res.json(createSuccessResponse(result, 'News retrieved successfully'));
     } catch (error) {
       next(error);
     }
@@ -32,28 +37,7 @@ export class NewsController {
   getById = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const news = await this.newsService.getNewsById(req.params.id);
-      res.json(createSuccessResponse(news));
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  update = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const news = await this.newsService.updateNews(
-        req.params.id, // Changed from req.body.id
-        req.body
-      );
-      res.json(createSuccessResponse(news, 'News updated successfully'));
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  delete = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      await this.newsService.deleteNews(req.params.id);
-      res.json(createSuccessResponse(null, 'News deleted successfully'));
+      res.json(createSuccessResponse(news, 'News details retrieved successfully'));
     } catch (error) {
       next(error);
     }
@@ -61,8 +45,27 @@ export class NewsController {
 
   search = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const news = await this.newsService.searchNews(req.query.q as string);
-      res.json(createSuccessResponse(news));
+      const query = req.query.q as string;
+      
+      if (!query) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Search query is required'
+        });
+      }
+      
+      const news = await this.newsService.searchNews(query);
+      res.json(createSuccessResponse(news, 'Search results retrieved successfully'));
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getRecent = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const limit = req.query.limit ? Number(req.query.limit) : 5;
+      const news = await this.newsService.getRecentNews(limit);
+      res.json(createSuccessResponse(news, 'Recent news retrieved successfully'));
     } catch (error) {
       next(error);
     }

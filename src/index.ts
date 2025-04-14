@@ -12,9 +12,6 @@ import newsRoutes from './routes/news.js';
 import userManagementRoutes from './routes/userManagement.js';
 import casesRouter from './routes/cases.js';
 
-// Schedulers
-import { NewsUpdateScheduler } from './schedulers/NewsUpdateScheduler.js';
-
 async function startServer() {
   const app = express();
 
@@ -49,10 +46,6 @@ async function startServer() {
     const server = app.listen(env.PORT, () => {
       console.log(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
     });
-
-    // Start news update scheduler
-    const newsScheduler = new NewsUpdateScheduler();
-    newsScheduler.start();
 
     return { app, server };
   } catch (error) {
